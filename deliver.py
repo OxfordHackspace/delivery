@@ -1,3 +1,5 @@
+from deliverManager import DeliveryManager
+
 filelines = ''
 with open('busy_day.in') as f:
     filelines = f.readlines()
@@ -15,16 +17,16 @@ productTypeWeights = [int(x) for x in filelines[2].split(' ')]
 
 numberOfWarehouses = int(filelines[3])
 
-warehouseLocations = []
-warehouseTypeCounts = []
+warehouses = []
 
 start = 4;
 
 for i in range(0,numberOfWarehouses):
+    warehouse = {'id':i}
     locChunk = filelines[start + (i*2)].split(' ')
-    location = {'row': int(locChunk[0]), 'col':(locChunk[1])}
-    warehouseLocations.append(location)
-    warehouseTypeCounts.append([int(x) for x in filelines[(start + (i*2))+1].split(' ')])
+    warehouse['location'] = {'row': int(locChunk[0]), 'col':(locChunk[1])}
+    warehouse['typeCounts'] = [int(x) for x in filelines[(start + (i*2))+1].split(' ')]
+    warehouses.append(warehouse)
 
 curPos = start + numberOfWarehouses*2
 
@@ -35,12 +37,15 @@ curPos += 1
 customerOrders = []
     
 for i in range(0, customerOrderCount):
-    order = {}
+    order = {'id':i}
     locChunk = filelines[curPos + (i*3)].split(' ')
-    order['row'] = int(locChunk[0])
-    order['col'] = int(locChunk[1])
+    order['location'] = {'row': int(locChunk[0]), 'col':  int(locChunk[1])}
     order['itemCount'] = int(filelines[(curPos + (i*3))+1])
     order['itemTypes'] = [int(x) for x in filelines[(curPos + (i*3))+2].split(' ')]
     customerOrders.append(order)
 
-print customerOrders[-1]
+dm = DeliveryManager(dronecount, maxload, warehouses, customerOrders, productTypeWeights)
+
+dm.go()
+
+
