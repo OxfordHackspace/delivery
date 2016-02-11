@@ -1,7 +1,8 @@
-from deliverManager import DeliveryManager
+import sys
+from deliveryManager import DeliveryManager
 
 filelines = ''
-with open('busy_day.in') as f:
+with open(sys.argv[1]) as f:
     filelines = f.readlines()
 
 bits = filelines[0].split(' ')
@@ -48,4 +49,5 @@ dm = DeliveryManager(dronecount, maxload, warehouses, customerOrders, productTyp
 
 dm.go()
 
+dm.writeOutputFile(sys.argv[1])
 
