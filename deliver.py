@@ -25,7 +25,7 @@ start = 4;
 for i in range(0,numberOfWarehouses):
     warehouse = {'id':i}
     locChunk = filelines[start + (i*2)].split(' ')
-    warehouse['location'] = {'row': int(locChunk[0]), 'col':(locChunk[1])}
+    warehouse['location'] = {'row': int(locChunk[0]), 'col':int(locChunk[1])}
     warehouse['typeCounts'] = [int(x) for x in filelines[(start + (i*2))+1].split(' ')]
     warehouses.append(warehouse)
 
@@ -44,6 +44,9 @@ for i in range(0, customerOrderCount):
     order['itemCount'] = int(filelines[(curPos + (i*3))+1])
     order['itemTypes'] = [int(x) for x in filelines[(curPos + (i*3))+2].split(' ')]
     customerOrders.append(order)
+
+
+print 'drones:', dronecount, 'maxload:', maxload, 'warehouses:', numberOfWarehouses, 'product types:', productTypeCount, 'orders:', customerOrderCount, 'max time:', deadline
 
 dm = DeliveryManager(dronecount, maxload, warehouses, customerOrders, productTypeWeights)
 

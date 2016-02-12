@@ -1,3 +1,5 @@
+import sys
+from math import ceil, sqrt
 from drone import Drone
 
 class DeliveryManager:
@@ -11,32 +13,54 @@ class DeliveryManager:
         self.productTypeWeights = productTypeWeights
 
     def go(self):
-        currentDrone = 0;
-        for order in self.orders:
+        self.orders.sort(key=lambda order: order['itemCount'], reverse=True)
+
+        while len(self.orders) > 0:
+            order = self.orders.pop()
             for iType in order['itemTypes']:
-                wid = 0
-                for warehouse in self.warehouses:
-                    if warehouse['typeCounts'][iType] > 0:
-                        wid = warehouse['id']
-                        warehouse['typeCounts'][iType] -= 1
-                        break
-                    
+                warehouse = self.findNearestWarehouse(order['location'], iType)
+                warehouse['typeCounts'][iType] -= 1
+
+                drone = self.findNearestDrone(warehouse)
+
+                if drone is None:
+                    for drone in self.drones:
+                        while len(drone.commands) > 0:
+                            drone.step()
+
+                drone = self.findNearestDrone(warehouse)
+
                 item = {'weight': self.productTypeWeights[iType], 'type':iType}
 
-                d = self.drones[currentDrone]
-                
-                d.addCommand([d.load, [item], self.warehouses[wid], order])
-                d.addCommand([d.deliver])
+                drone.addCommand([drone.load, item, warehouse, order])
+                drone.addCommand([drone.deliver])
 
-                currentDrone += 1
+        for drone in self.drones:
+            while len(drone.commands) > 0:
+                drone.step()
 
-                if currentDrone == len(self.drones):
-                    for drone in self.drones:
-                        drone.step()
-                        drone.step()
-                    currentDrone = 0
+    def findNearestDrone(self, warehouse):
+        posDrones = [drone for drone in self.drones if len(drone.commands) == 0]
+        if len(posDrones) == 0:
+            return None
+        posDrones.sort(key=lambda drone: self.distance(drone.location, warehouse['location']))
+        return posDrones[0]
 
+    def distance(self, loc1, loc2):
+        rd = (loc1['row'] - loc2['row'])*(loc1['row'] - loc2['row'])
+        cd = (loc1['col'] - loc2['col'])*(loc1['col'] - loc2['col'])
+        return ceil(sqrt(rd+cd))
+
+    def findNearestWarehouse(self, orderLoc, iType):
+        posHouses = [warehouse for warehouse in self.warehouses if warehouse['typeCounts'][iType] > 0]
+        posHouses.sort(key=lambda warehouse: self.distance(orderLoc, warehouse['location']))
+        return posHouses[0]
+    
     def writeOutputFile(self, filename):
+
+        self.drones.sort(key=lambda drone: drone.totalTime)
+        print 'total time:', self.drones[0].totalTime
+
         commands = []
         for drone in self.drones:
             for command in drone.commandText:

@@ -3,12 +3,11 @@ from math import ceil, sqrt
 class Drone:
     def __init__(self, id, capacity, location):
         self.id = id
-        self.originalCap = capacity
-        self.capacity = capacity
         self.location = location
         self.turnsToDestination = 0
+        self.totalTime = 0
         self.order = None
-        self.inventory = []
+        self.item = None
         self.commands = []
         self.commandText = []
 
@@ -19,26 +18,17 @@ class Drone:
             self.runNextCommand()
 
     def setTurnsLeft(self, destination):
-        self.location = destination
         if(self.location['row'] != destination['row']) or (self.location['col'] != destination['col']):
             rowDiffSq = (self.location['row'] - destination['row']) * (self.location['row'] - destination['row'])
             colDiffSq = (self.location['col'] - destination['col']) * (self.location['col'] - destination['col'])
             self.turnsToDestination = ceil(sqrt(rowDiffSq + colDiffSq))
+            self.totalTime += self.turnsToDestination
         else:
             self.turnsToDestination = 0
+        self.location = destination
 
-    def load(self, items, warehouse, order):        
-        weight = 0
-        for item in items:
-            weight += item['weight']
-        
-        if self.capacity < weight:
-            print 'too heavy'
-            return -1
-
-        self.capacity -= weight
-
-        self.inventory.extend(items)
+    def load(self, item, warehouse, order):        
+        self.item = item
 
         self.order = order
         self.warehouse = warehouse
@@ -46,16 +36,13 @@ class Drone:
         self.setTurnsLeft(warehouse['location'])
 
         self.commandText.append('%d L %d %d 1'%(self.id, warehouse['id'], item['type']))
-
-        return self.capacity
             
     def deliver(self):
         if self.order is not None:
-            self.commandText.append('%d D %d %d 1'%(self.id, self.order['id'], self.inventory[0]['type']))
+            self.commandText.append('%d D %d %d 1'%(self.id, self.order['id'], self.item['type']))
             self.setTurnsLeft(self.order['location'])
             self.order = None
-            self.inventory = []
-            self.capacity = self.originalCap
+            self.item = None
 
     def addCommand(self, command):
         self.commands.insert(0,command)
